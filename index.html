@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bouncing Ball Splash Animation</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0f0f0f;
+      overflow: hidden;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let centerX = canvas.width / 2;
+    let groundY = canvas.height / 2 + 100;
+    let ball = { x: centerX, y: 100, vy: 0, radius: 30, bounces: 0, state: "falling" };
+    let gravity = 1;
+    let damping = 0.6;
+    let splashParticles = [];
+    let animationFrame;
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#00f0ff";
+      ctx.shadowColor = "#00f0ff";
+      ctx.shadowBlur = 30;
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function createSplash() {
+      splashParticles = [];
+      for (let i = 0; i < 50; i++) {
+        splashParticles.push({
+          x: ball.x,
+          y: groundY,
+          vx: (Math.random() - 0.5) * 10,
+          vy: Math.random() * -10,
+          radius: Math.random() * 3 + 2,
+          alpha: 1
+        });
+      }
+    }
+
+    function drawSplash() {
+      splashParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.3;
+        p.alpha -= 0.02;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 240, 255, ${p.alpha})`;
+        ctx.fill();
+        ctx.closePath();
+      });
+      splashParticles = splashParticles.filter(p => p.alpha > 0);
+    }
+
+    function resetAnimation() {
+      ball.y = 100;
+      ball.vy = 0;
+      ball.bounces = 0;
+      ball.state = "falling";
+      splashParticles = [];
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (ball.state === "falling") {
+        ball.vy += gravity;
+        ball.y += ball.vy;
+
+        if (ball.y + ball.radius >= groundY) {
+          ball.y = groundY - ball.radius;
+          ball.vy *= -damping;
+          ball.bounces += 1;
+
+          if (ball.bounces >= 3) {
+            ball.state = "splash";
+            createSplash();
+          }
+        }
+
+        drawBall();
+      } else if (ball.state === "splash") {
+        drawSplash();
+        if (splashParticles.length === 0) {
+          resetAnimation();
+        }
+      }
+
+      animationFrame = requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
